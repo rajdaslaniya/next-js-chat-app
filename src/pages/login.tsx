@@ -1,11 +1,35 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
 import LoginSignUpLayout from "@/components/Layout/LoginSignUpLayout";
 import InputField from "@/components/common/InputField";
+import apiService from "@/utils/base-services";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
 const Login = () => {
+  const router = useRouter();
+
+  const loginApiCall = async (value: { email: string; password: string }) => {
+    try {
+      const apiResponse = await apiService.post("/auth/login", {
+        email: value.email,
+        password: value.password,
+      });
+      localStorage.setItem("token", apiResponse.data.token);
+      localStorage.setItem(
+        "userDetails",
+        JSON.stringify(apiResponse.data.data)
+      );
+      toast.success("User logged in successfully");
+      router.push("/");
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -19,7 +43,7 @@ const Login = () => {
       password: Yup.string().trim().required("Password is required"),
     }),
     onSubmit: (values) => {
-      console.log(values);
+      loginApiCall(values);
     },
   });
 
