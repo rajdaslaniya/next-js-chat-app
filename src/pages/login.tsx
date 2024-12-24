@@ -55,7 +55,6 @@ const Login = () => {
           <br />
           <InputField
             id="email"
-            autoFocus
             label="Email"
             type="email"
             formik={formik}

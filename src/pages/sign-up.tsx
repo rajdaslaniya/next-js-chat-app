@@ -30,7 +30,7 @@ const SignUp = () => {
       });
       if (apiResponse.data.data && apiResponse.status == 200) {
         toast.success("User account created successfully");
-        router.push("/");
+        router.push("/login");
       }
     } catch (error: any) {
       toast.error(error.response.data.message);
@@ -110,7 +110,6 @@ const SignUp = () => {
           <br />
           <InputField
             id="name"
-            autoFocus
             label="Name"
             type="text"
             formik={formik}
