@@ -8,6 +8,10 @@ const apiService: AxiosInstance = axios.create({
 
 apiService.interceptors.request.use(
   (config) => {
+    const loader = document.getElementsByClassName("loader-container");
+    if (loader[0]) {
+      (loader[0] as HTMLElement).style.display = "flex";
+    }
     const token = localStorage.getItem("token");
     if (token && config.headers["x-requires-token"] !== "false") {
       config.headers["Authorization"] = token;
@@ -18,8 +22,18 @@ apiService.interceptors.request.use(
 );
 
 apiService.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const loader = document.getElementsByClassName("loader-container");
+    if (loader[0]) {
+      (loader[0] as HTMLElement).style.display = "none";
+    }
+    return response;
+  },
   (error) => {
+    const loader = document.getElementsByClassName("loader-container");
+    if (loader[0]) {
+      (loader[0] as HTMLElement).style.display = "none";
+    }
     if (error.response?.status === 401) {
       console.error("Token expired or invalid.");
       toast.error("Unauthorized user");

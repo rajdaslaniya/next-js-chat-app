@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -28,7 +27,7 @@ const SignUp = () => {
       });
       if (apiResponse.data.data && apiResponse.status == 200) {
         toast.success("User account created successfully");
-        router.push("/");
+        router.push("/login");
       }
     } catch (error: any) {
       toast.error(error.response.data.message);
