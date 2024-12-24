@@ -5,11 +5,7 @@ interface ILoginSignUpLayout {
 }
 
 const LoginSignUpLayout: React.FC<ILoginSignUpLayout> = ({ children }) => {
-  return (
-    <div className="w-full h-100 min-h-full overflow-y-auto flex items-center justify-center bg-gray-500 p-3">
-      {children}
-    </div>
-  );
+  return <div className="bg-background flex h-screen w-full items-center justify-center px-4">{children}</div>;
 };
 
 export default LoginSignUpLayout;

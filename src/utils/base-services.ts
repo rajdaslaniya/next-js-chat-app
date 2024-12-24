@@ -2,8 +2,8 @@ import axios, { AxiosInstance } from "axios";
 import { toast } from "react-toastify";
 
 const apiService: AxiosInstance = axios.create({
-  // baseURL: "http://localhost:3000",
-  baseURL: "https://node-js-chat-app-1.onrender.com",
+  baseURL: "http://localhost:8080",
+  // baseURL: "https://node-js-chat-app-1.onrender.com",
 });
 
 apiService.interceptors.request.use(
