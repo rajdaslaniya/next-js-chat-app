@@ -141,8 +141,8 @@ const SignUp = () => {
               {AvatarImage.map((image, index) => (
                 <Image
                   key={index}
-                  height={100}
-                  width={100}
+                  height={60}
+                  width={60}
                   onClick={() => formik.setFieldValue("avatar", image)}
                   className={`rounded-full cursor-pointer ${
                     formik.values.avatar === image
