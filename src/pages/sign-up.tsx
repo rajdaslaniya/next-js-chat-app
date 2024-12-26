@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import Link from "next/link";
 import LoginSignUpLayout from "@/components/Layout/LoginSignUpLayout";
 import Image from "next/image";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import apiService from "@/utils/base-services";
 import { useRouter } from "next/router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,11 +26,11 @@ const SignUp = () => {
         avatar: values.avatar,
       });
       if (apiResponse.data.data && apiResponse.status == 200) {
-        toast.success("User account created successfully");
+        toast.success("User account created successfully", { duration: 3000 });
         router.push("/login");
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response.data.message, { duration: 3000 });
     }
   };
   const [hobbies, setHobbies] = useState<{ _id: string; name: string }[]>([]);

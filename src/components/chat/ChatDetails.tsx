@@ -1,80 +1,134 @@
 import React from "react";
-import Image from "next/image";
-import { messageSvg } from "@/assets";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Button } from "../ui/button";
+import { Send, Trash2 } from "lucide-react";
+import { Separator } from "../ui/separator";
+import { Input } from "../ui/input";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "../ui/scroll-area";
 
 const ChatDetails = () => {
+  const [input, setInput] = React.useState("");
+  const [messages, setMessages] = React.useState([
+    {
+      role: "agent",
+      content: "Hi, how can I help you today?",
+    },
+    {
+      role: "user",
+      content: "Hey, I'm having trouble with my account.",
+    },
+    {
+      role: "agent",
+      content: "What seems to be the problem?",
+    },
+    {
+      role: "user",
+      content: "I can't log in.",
+    },
+    {
+      role: "agent",
+      content: "Hi, how can I help you today?",
+    },
+    {
+      role: "user",
+      content: "Hey, I'm having trouble with my account.",
+    },
+    {
+      role: "agent",
+      content: "What seems to be the problem?",
+    },
+    {
+      role: "user",
+      content: "I can't log in.",
+    },
+    {
+      role: "agent",
+      content: "Hi, how can I help you today?",
+    },
+    {
+      role: "user",
+      content: "Hey, I'm having trouble with my account.",
+    },
+    {
+      role: "agent",
+      content: "What seems to be the problem?",
+    },
+    {
+      role: "user",
+      content: "I can't log in.",
+    },
+  ]);
+
   return (
     <>
-      <div className="flex gap-2 items-center mb-2">
-        <Image
-          className="rounded-full max-h-fit"
-          height={40}
-          width={40}
-          alt="user-image"
-          src="https://mostaql.hsoubcdn.com/uploads/thumbnails/1241455/6215569d78504/Minimal-Profile-Sketch-02.jpg"
-        />
-
-        <p className="text-black text-md">Group name</p>
-      </div>
-      <hr className="bg-gray-500 mb-2" />
-      <div className="flex-grow shrink basis-auto relative">
-        <div className="absolute left-0 right-0 bottom-0 flex flex-col gap-3 overflow-auto max-h-full">
-          {Array(1)
-            .fill(0)
-            .map(() => (
-              <>
-                <div className="flex gap-3 ">
-                  <Image
-                    className="rounded-full max-h-fit"
-                    height={25}
-                    width={25}
-                    alt="user-image"
-                    src="https://mostaql.hsoubcdn.com/uploads/thumbnails/1241455/6215569d78504/Minimal-Profile-Sketch-02.jpg"
-                  />
-                  <div className="p-2 bg-gray-500 text-white rounded-md max-w-screen-sm">
-                    <p className="text-sm">
-                      It is a long established fact that a reader will be
-                      distracted by the readable content of a page when looking
-                      at its layout. The point of using Lorem Ipsum is that it
-                      has a more-or-less normal distribution of letters, as
-                      opposed to using 'Content here.
-                    </p>
-                    <p className="text-xs text-right">7:30 PM</p>
-                  </div>
+      <TooltipProvider delayDuration={0}>
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between px-4 py-3">
+            <p className="text-md font-bold">Name</p>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Move to trash</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Move to trash</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          <Separator />
+          <ScrollArea>
+            <div className="space-y-4 p-4 overflow-y-auto">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                    message.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted"
+                  )}
+                >
+                  {message.content}
                 </div>
-
-                <div className="flex gap-3 flex-row-reverse">
-                  <Image
-                    className="rounded-full max-h-fit"
-                    height={25}
-                    width={25}
-                    alt="user-image"
-                    src="https://mostaql.hsoubcdn.com/uploads/thumbnails/1241455/6215569d78504/Minimal-Profile-Sketch-02.jpg"
-                  />
-                  <div className="p-2 bg-gray-500 text-white rounded-md max-w-screen-sm">
-                    <p className="text-sm">
-                      It is a long established fact that a reader will be
-                      distracted by the readable content of a page when looking
-                      at its layout. The point of using Lorem Ipsum is that it
-                      has a more-or-less normal distribution of letters, as
-                      opposed to using 'Content here.
-                    </p>
-                    <p className="text-xs text-right">7:30 PM</p>
+              ))}
+            </div>
+          </ScrollArea>
+          {true ? (
+            <div className="flex flex-1 flex-col">
+              <Separator className="mt-auto" />
+              <div className="p-4">
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (input.trim().length === 0) return;
+                    setMessages([
+                      ...messages,
+                      {
+                        role: "user",
+                        content: input,
+                      },
+                    ]);
+                    setInput("");
+                  }}
+                >
+                  <div className="grid gap-4">
+                    <Input value={input} onChange={(event) => setInput(event.target.value)} className="p-4" placeholder={`Reply...`} />
+                    <div className="flex items-center">
+                      <Button type="submit" size="icon" disabled={input.trim().length === 0}>
+                        <Send className="h-4 w-4" />
+                        <span className="sr-only">Send</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </>
-            ))}
+                </form>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-muted-foreground">No message selected</div>
+          )}
         </div>
-      </div>
-      <div className="flex gap-2 items-center  mt-2">
-        <input
-          placeholder="Write message"
-          className="w-full p-2 border border-gray-500 rounded-md text-black"
-        />
-        <button className="bg-gray-500 rounded-md text-white p-3 border-gray-500">
-          <Image alt="send" height={20} width={20} src={messageSvg} />
-        </button>
-      </div>
+      </TooltipProvider>
     </>
   );
 };

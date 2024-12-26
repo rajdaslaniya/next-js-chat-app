@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import Link from "next/link";
 import LoginSignUpLayout from "@/components/Layout/LoginSignUpLayout";
 import apiService from "@/utils/base-services";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { useRouter } from "next/router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,10 +23,10 @@ const Login = () => {
       });
       localStorage.setItem("token", apiResponse.data.token);
       localStorage.setItem("userDetails", JSON.stringify(apiResponse.data.data));
-      toast.success("User logged in successfully");
+      toast.success("User logged in successfully", { duration: 3000 });
       router.push("/");
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response.data.message, { duration: 3000 });
     }
   };
 

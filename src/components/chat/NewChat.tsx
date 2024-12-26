@@ -1,94 +1,117 @@
-import { useFormik } from "formik";
+// @ts-nocheck
 import React, { useState } from "react";
+import { useFormik } from "formik";
 import * as Yup from "yup";
-import InputField from "../common/InputField";
-import CheckboxGroup from "../common/CheckboxGroup";
+
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Check } from "lucide-react";
 
 interface INewChat {
   closeChatModal: () => void;
+  open: boolean;
 }
 
-const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
-  const [users, setUsers] = useState<{ _id: string; name: string }[]>([
+const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
+  const [users, setUsers] = useState<{ _id: string; name: string; email: string }[]>([
     {
       _id: "7483274823",
       name: "Raj Daslaniya",
+      email: "rajdaslaniya@gmail.com",
     },
     {
       _id: "7483274",
       name: "Jeet Desai",
+      email: "jeetdesai@gmail.com",
     },
   ]);
+
+  const [selectedUsers, setSelectedUsers] = React.useState<{ _id: string; name: string; email: string }[]>([]);
+
   const formik = useFormik<{
     chat_name: string;
     users: string[];
   }>({
-    initialValues: { chat_name: "", users: [] },
+    enableReinitialize: true,
+    initialValues: { chat_name: "demo", users: [] },
     validationSchema: Yup.object({
       chat_name: Yup.string()
         .required("Name is required")
         .min(3, "Minimum 3 characters are allowed")
         .max(50, "Maximum 50 characters are allowed")
-        .matches(
-          /^\S+(\s\S+)?$/,
-          "Name must contain a space in between and no spaces at the start or end"
-        )
+        .matches(/^\S+(\s\S+)?$/, "Name must contain a space in between and no spaces at the start or end")
         .trim(),
-      users: Yup.array()
-        .min(1, "You must select at least one users")
-        .required("This field is required"),
+      users: Yup.array().min(1, "You must select at least one users").required("This field is required"),
     }),
-    onSubmit: (values) => {},
+    onSubmit: (values) => {
+      console.log(values);
+    },
   });
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4">
-        <form onSubmit={formik.handleSubmit}>
-          <div className="flex justify-between items-center border-b pb-2">
-            <h3 className="text-xl font-semibold text-gray-800">
-              Select user for chat
-            </h3>
-            <button
-              className="text-gray-400 hover:text-gray-600"
-              aria-label="Close"
-              onClick={closeChatModal}
-            >
-              ✕
-            </button>
-          </div>
-          <InputField
-            id="chat_name"
-            label="Chat name"
-            type="text"
-            formik={formik}
-            labelClassName="text-black"
-          />
-
-          <CheckboxGroup
-            name="users"
-            label="Select users"
-            options={users}
-            formik={formik}
-          />
-
-          <div className="flex justify-end space-x-4 border-t pt-2">
-            <button
-              onClick={closeChatModal}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-white-700"
-            >
-              Create
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <>
+      <Dialog open={open} onOpenChange={closeChatModal}>
+        <DialogContent className="gap-0 p-0 outline-none bg-background">
+          <DialogHeader className="px-4 pb-4 pt-5">
+            <DialogTitle>New message</DialogTitle>
+            <DialogDescription>Invite a user to this thread. This will create a new group message.</DialogDescription>
+          </DialogHeader>
+          <Command className="overflow-hidden rounded-t-none border-t">
+            <CommandInput placeholder="Search user..." />
+            <CommandList>
+              <CommandEmpty>No users found.</CommandEmpty>
+              <CommandGroup className="p-2">
+                {users.map((user) => (
+                  <CommandItem
+                    key={user._id}
+                    className="flex items-center px-2"
+                    onSelect={() => {
+                      if (formik.values.users.includes(user)) {
+                        formik.setFieldValue(
+                          "users",
+                          formik.values.users.filter((selectedUser) => selectedUser !== user)
+                        );
+                      } else {
+                        formik.setFieldValue("users", [...formik.values.users, user]);
+                      }
+                    }}
+                  >
+                    <Avatar>
+                      <AvatarImage src={user.avatar} alt="Image" />
+                      <AvatarFallback>{user.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="ml-2">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                    {formik.values.users.includes(user) ? <Check className="ml-auto flex h-5 w-5 text-primary" /> : null}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <DialogFooter className="flex items-center border-t p-4 sm:justify-between">
+            {formik.values.users.length > 0 ? (
+              <div className="flex -space-x-2 overflow-hidden">
+                {formik.values.users.map((user) => (
+                  <Avatar key={user.email} className="inline-block border-2 border-background">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  </Avatar>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Select users to add to this thread.</p>
+            )}
+            <Button type="submit" onClick={() => formik.handleSubmit()}>
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

@@ -1,4 +1,3 @@
-// "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -7,6 +6,12 @@ import ChatList from "@/components/chat/ChatList";
 import ChatDetails from "@/components/chat/ChatDetails";
 import { plusSvg } from "@/assets";
 import NewChat from "@/components/chat/NewChat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -28,70 +33,79 @@ const Dashboard = () => {
         avatar: string;
         id: string;
       } = JSON.parse(userDetailsString);
-      if (
-        userDetails.name &&
-        userDetails.email &&
-        userDetails.id &&
-        userDetails.avatar
-      )
-        setUserDetail(userDetails);
+      if (userDetails.name && userDetails.email && userDetails.id && userDetails.avatar) setUserDetail(userDetails);
     }
   }, []);
-
-  const [isOpenDropDown, setIsOpenDropDown] = useState(false);
 
   const redirectToLogin = () => {
     router.push("/login");
     localStorage.clear();
   };
 
+  const defaultLayout = [150, 300];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex grow-0 shrink-0 basis-auto  items-center justify-between p-3 bg-gray-500 shadow-md">
-        <label className="text-xl text-white">{userDetail.name}</label>
+      <div className="flex grow-0 shrink-0 basis-auto items-center justify-between p-3 border-b border-gray-500">
         <div className="relative">
           {userDetail.avatar && (
-            <Image
-              className="rounded-full cursor-pointer"
-              height={50}
-              width={50}
-              alt="profiles"
-              src={userDetail.avatar}
-              onClick={() => setIsOpenDropDown(!isOpenDropDown)}
-            />
-          )}
-          {isOpenDropDown && (
-            <div
-              style={{ top: "60px", zIndex: 1 }}
-              className="absolute rounded w-32 top-15 right-0 shadow-md p-4 bg-white"
-            >
-              <button
-                className="text-gray-500 cursor-pointer"
-                onClick={() => redirectToLogin()}
-              >
-                Logout
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center space-x-4">
+                  <Avatar>
+                    <AvatarImage src={userDetail.avatar} alt="Image" />
+                    <AvatarFallback>OM</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium leading-none">{userDetail.name}</p>
+                    <p className="text-sm text-muted-foreground">{userDetail.email}</p>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => redirectToLogin()}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={() => setOpenNewChat(true)}>
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">New message</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={10}>New message</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <div className="flex gap-3 p-2 overflow-hidden h-full">
+
+      {openNewChat && <NewChat open={openNewChat} closeChatModal={() => setOpenNewChat(false)} />}
+
+      {/* <div className="flex gap-3 p-2 overflow-hidden h-full">
         <div className="w-80 min-w-min left-part flex flex-col gap-3 overflow-hidden bg-gray-500 p-2 rounded-md relative">
           <ChatList />
-          {openNewChat && (
-            <NewChat closeChatModal={() => setOpenNewChat(false)} />
-          )}
-          <button
-            onClick={() => setOpenNewChat(true)}
-            className="bg-black z-10 p-3 rounded-full text-md text-gray-500 absolute bottom-4 right-4"
-          >
-            <Image src={plusSvg} alt="plus" height={20} width={20} />
-          </button>
         </div>
         <div className="shrink right-part p-2 border border-gray-500 rounded-md w-full flex flex-col">
           <ChatDetails />
         </div>
-      </div>
+      </div> */}
+      <ResizablePanelGroup
+        direction="horizontal"
+        onLayout={(sizes: number[]) => {
+          document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(sizes)}`;
+        }}
+        className="h-full items-stretch"
+      >
+        <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
+          <ChatList />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={defaultLayout[1]} minSize={40}>
+          <ChatDetails />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
