@@ -65,3 +65,13 @@ body,
     transform: rotate(1turn);
   }
 }
+
+.user-image {
+  height: 35px;
+  width: 35px;
+  max-height: 35px;
+}
+
+input {
+  outline: none;
+}
