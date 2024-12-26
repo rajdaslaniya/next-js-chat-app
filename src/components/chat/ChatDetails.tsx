@@ -31,7 +31,7 @@ const ChatDetails = () => {
                     alt="user-image"
                     src="https://mostaql.hsoubcdn.com/uploads/thumbnails/1241455/6215569d78504/Minimal-Profile-Sketch-02.jpg"
                   />
-                  <div className="p-2 bg-gray-400 text-white rounded-md max-w-screen-sm">
+                  <div className="p-2 bg-gray-500 text-white rounded-md max-w-screen-sm">
                     <p className="text-sm">
                       It is a long established fact that a reader will be
                       distracted by the readable content of a page when looking
