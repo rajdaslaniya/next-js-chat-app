@@ -83,3 +83,13 @@ body,
     @apply bg-background text-foreground;
   }
 }
+
+.user-image {
+  height: 35px;
+  width: 35px;
+  max-height: 35px;
+}
+
+input {
+  outline: none;
+}
