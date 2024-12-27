@@ -30,7 +30,7 @@ const InputField: React.FC<InputFieldProps> = ({
         autoFocus={autoFocus}
         id={id}
         {...formik.getFieldProps(id)}
-        className={`w-full p-2 border border-gray-500 rounded-md text-black ${className}`}
+        className={`w-full p-2 border border-black rounded-md text-black ${className}`}
       />
       {formik.touched[id] && formik.errors[id] ? (
         <p className="text-red-500 text-sm">{formik.errors[id]}</p>

@@ -69,7 +69,7 @@ const Login = () => {
           />
           <button
             type="submit"
-            className="w-full rounded-md p-2 text-white bg-gray-500 medium mt-5"
+            className="w-full rounded-md p-2 text-white bg-black medium mt-5"
           >
             Submit
           </button>

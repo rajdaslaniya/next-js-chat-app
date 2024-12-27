@@ -146,7 +146,7 @@ const SignUp = () => {
                   onClick={() => formik.setFieldValue("avatar", image)}
                   className={`rounded-full cursor-pointer ${
                     formik.values.avatar === image
-                      ? "border-3 border-gray-500"
+                      ? "border-3 border-black"
                       : ""
                   }`}
                   alt="image"
@@ -160,7 +160,7 @@ const SignUp = () => {
           </div>
           <button
             type="submit"
-            className="w-full rounded-md p-2 text-white bg-gray-500 medium mt-5"
+            className="w-full rounded-md p-2 text-white bg-black medium mt-5"
           >
             Submit
           </button>
