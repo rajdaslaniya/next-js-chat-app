@@ -1,40 +1,62 @@
 import { useFormik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Image from "next/image";
 import { searchSvg } from "@/assets";
+import apiService from "@/utils/base-services";
+import { toast } from "react-toastify";
 
 interface INewChat {
   closeChatModal: () => void;
 }
 
 const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
-  const [users, setUsers] = useState<{ _id: string; name: string }[]>([
-    {
-      _id: "7483274823",
-      name: "Raj Daslaniya",
-    },
-    {
-      _id: "7483274",
-      name: "Jeet Desai",
-    },
-  ]);
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  const [users, setUsers] = useState<
+    { _id: string; name: string; email: string }[]
+  >([]);
+
+  const getUsers = async () => {
+    try {
+      const apiResponse = await apiService.get(`/chat/users`);
+      setUsers(apiResponse.data.data);
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const createChat = async (values: { users: string }) => {
+    try {
+      const apiResponse = await apiService.post(`/chat`, {
+        users: [values.users],
+      });
+      if (apiResponse.status === 200) {
+        toast.success("Chat created successfully");
+        closeChatModal();
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
   const formik = useFormik<{
-    chat_name: string;
-    users: string[];
+    users: string;
   }>({
-    initialValues: { chat_name: "", users: [] },
+    initialValues: { users: "" },
     validationSchema: Yup.object({
-      users: Yup.array()
-        .min(1, "You must select at least one users")
-        .required("This field is required"),
+      users: Yup.string().required("This field is required"),
     }),
-    onSubmit: (values) => {},
+    onSubmit: (values) => {
+      createChat(values);
+    },
   });
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-black rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-hidden p-3">
+      <div className="bg-black rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 overflow-auto max-h-full">
         <form onSubmit={formik.handleSubmit}>
           <div className="flex justify-between items-center border-b pb-2">
             <div className="">
@@ -69,23 +91,39 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
             />
           </div>
           <div className="flex flex-col gap-3 mb-2">
-            <div
-              style={{ backgroundColor: "#6b6b6b" }}
-              className="flex gap-2 p-2 rounded-md cursor-pointer"
-            >
-              <div
-                className="text-xl text-semibold text-white  rounded-full h-11 w-11 flex items-center justify-center"
-                style={{ backgroundColor: "#aba3a3" }}
-              >
-                J
-              </div>
-              <div className="">
-                <p className="text-md text-white">Raj</p>
-                <p className="text-sm" style={{ color: "#d9d6d6" }}>
-                  raj@yopmail.com
-                </p>
-              </div>
-            </div>
+            {users.map((data) => {
+              return (
+                <div
+                  className="flex gap-2 p-2 rounded-md cursor-pointer"
+                  onClick={() => formik.setFieldValue("users", data._id)}
+                  style={{
+                    backgroundColor:
+                      formik.values.users === data._id
+                        ? "#6b6b6b"
+                        : "transparent",
+                  }}
+                >
+                  <div
+                    className="text-xl text-semibold text-white  rounded-full h-11 w-11 flex items-center justify-center"
+                    style={{
+                      backgroundColor:
+                        formik.values.users === data._id
+                          ? "#aba3a3"
+                          : "#6b6b6b",
+                    }}
+                  >
+                    {data.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="">
+                    <p className="text-md text-white">{data.name}</p>
+                    <p className="text-sm" style={{ color: "#d9d6d6" }}>
+                      {data.email}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            {/* 
             <div className="flex gap-2 p-2 rounded-md cursor-pointer">
               <div
                 className="text-xl text-semibold text-white  rounded-full h-11 w-11 flex items-center justify-center"
@@ -99,12 +137,13 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
                   jeet@yopmail.com
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex justify-end space-x-4 border-t pt-2">
             <button
               type="submit"
+              disabled={!formik.isValid}
               className="px-4 py-2 bg-white text-black rounded-md hover:bg-white-700"
             >
               Create

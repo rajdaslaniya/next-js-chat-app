@@ -7,6 +7,8 @@ import ChatList from "@/components/chat/ChatList";
 import ChatDetails from "@/components/chat/ChatDetails";
 import { plusSvg } from "@/assets";
 import NewChat from "@/components/chat/NewChat";
+import apiService from "@/utils/base-services";
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -14,35 +16,41 @@ const Dashboard = () => {
     name: string;
     email: string;
     avatar: string;
-    id: string;
-  }>({ avatar: "", email: "", name: "", id: "" });
+    _id: string;
+  }>({ avatar: "", email: "", name: "", _id: "" });
+
+  const [selectedChat, setSelectedChat] = useState("");
 
   const [openNewChat, setOpenNewChat] = useState(false);
 
   useEffect(() => {
-    const userDetailsString = localStorage.getItem("userDetails");
-    if (userDetailsString) {
-      const userDetails: {
-        name: string;
-        email: string;
-        avatar: string;
-        id: string;
-      } = JSON.parse(userDetailsString);
-      if (
-        userDetails.name &&
-        userDetails.email &&
-        userDetails.id &&
-        userDetails.avatar
-      )
-        setUserDetail(userDetails);
-    }
+    getUserDetails();
   }, []);
 
+  const getUserDetails = async () => {
+    try {
+      const apiResponse = await apiService.get("/chat/user");
+      if (apiResponse.status === 200) {
+        setUserDetail(apiResponse.data.data);
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
   const [isOpenDropDown, setIsOpenDropDown] = useState(false);
+
+  const setSelectedChatValue = (id: string) => {
+    setSelectedChat(id);
+  };
 
   const redirectToLogin = () => {
     router.push("/login");
     localStorage.clear();
+  };
+
+  const changeCloseChatModalValue = () => {
+    setOpenNewChat(false);
   };
 
   return (
@@ -80,7 +88,7 @@ const Dashboard = () => {
           </div>
         </div>
         {openNewChat && (
-          <NewChat closeChatModal={() => setOpenNewChat(false)} />
+          <NewChat closeChatModal={() => changeCloseChatModalValue()} />
         )}
         <button
           onClick={() => setOpenNewChat(true)}
@@ -91,10 +99,16 @@ const Dashboard = () => {
       </div>
       <div className="flex gap-3 p-2 overflow-hidden h-full">
         <div className="w-80 min-w-min left-part flex flex-col gap-3 overflow-hidden border-black border p-2 rounded-md ">
-          <ChatList />
+          <ChatList setSelectedChatValue={setSelectedChatValue} />
         </div>
         <div className="shrink right-part p-2 border border-black rounded-md w-full flex flex-col">
-          <ChatDetails />
+          {selectedChat ? (
+            <ChatDetails selectedChat={selectedChat} userDetail={userDetail} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              Select chat
+            </div>
+          )}
         </div>
       </div>
     </div>
