@@ -4,50 +4,85 @@ import { searchSvg } from "@/assets";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
 
+interface User {
+  avatar: string;
+  email: string;
+  name: string;
+  _id: string;
+}
+
+interface LatestMessage {
+  chat_id: string;
+  message: string;
+  createdAt: string;
+  sender: {
+    email: string;
+    name: string;
+    avatar: string;
+  };
+}
+
+interface Chat {
+  _id: string;
+  users: User[];
+  photo: string;
+  chat_name: string;
+  is_group: boolean;
+  group_admin: string;
+  latest_message?: LatestMessage;
+}
+
 interface IChatList {
   setSelectedChatValue: (id: string) => void;
+  openNewChat: boolean;
+  selectedChat: string;
 }
-const ChatList: React.FC<IChatList> = ({ setSelectedChatValue }) => {
+
+const ChatList: React.FC<IChatList> = ({
+  setSelectedChatValue,
+  openNewChat,
+  selectedChat,
+}) => {
   const [searchText, setSearchText] = useState("");
+  const [chatList, setChatList] = useState<Chat[]>([]);
+  const [filteredChatList, setFilteredChatList] = useState<Chat[]>([]);
 
-  const [chatList, setChatList] = useState<
-    {
-      _id: string;
-      users: { avatar: string; email: string; name: string; _id: string }[];
-      photo: string;
-      chat_name: string;
-      is_group: boolean;
-      group_admin: string;
-      latest_message: {
-        chat_id: string;
-        message: string;
-        createdAt: string;
-        sender: {
-          email: string;
-          name: string;
-          avatar: string;
-        };
-      };
-    }[]
-  >([]);
-
+  // Fetch chat list when the component mounts or when `openNewChat` changes
   useEffect(() => {
-    getChatList();
-  }, []);
+    fetchChatList();
+  }, [openNewChat]);
 
-  const getChatList = async () => {
+  const fetchChatList = async () => {
     try {
       const apiResponse = await apiService.get("/chat/chats");
       if (apiResponse.status === 200) {
-        setChatList(apiResponse.data.data);
+        const chats = apiResponse.data.data;
+        setChatList(chats);
+        setFilteredChatList(chats); // Initialize filtered chat list
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(
+        error.response?.data?.message || "Failed to fetch chat list."
+      );
     }
   };
 
+  // Update the filtered chat list when `searchText` changes
+  useEffect(() => {
+    const filtered = chatList.filter((chat) => {
+      const chatName = chat.is_group ? chat.chat_name : chat.users[0]?.email;
+      const latestMessage = chat.latest_message?.message || "";
+      return (
+        chatName.toLowerCase().includes(searchText.toLowerCase()) ||
+        latestMessage.toLowerCase().includes(searchText.toLowerCase())
+      );
+    });
+    setFilteredChatList(filtered);
+  }, [searchText, chatList]);
+
   return (
     <>
+      {/* Search Input */}
       <div className="relative">
         <Image
           src={searchSvg}
@@ -55,42 +90,62 @@ const ChatList: React.FC<IChatList> = ({ setSelectedChatValue }) => {
           width={20}
           alt="search"
           className="absolute top-0 bottom-0"
-          style={{ left: 10, margin: "auto 0px" }}
+          style={{ left: 10, margin: "auto 0" }}
         />
         <input
+          type="text"
           placeholder="Search here"
           value={searchText}
-          onChange={(event) => setSearchText(event.target.value)}
+          onChange={(e) => setSearchText(e.target.value)}
           className="w-full p-2 border border-black rounded-md text-black pl-8"
         />
       </div>
-      <div className="w-full flex flex-col gap-3 grow-1 shrink-1 basis-auto overflow-y-auto overflow-x-hidden">
-        {chatList.map((data) => (
-          <div
-            className="flex w-full border border-black p-2 gap-2 items-center rounded-md cursor-pointer"
-            key={data._id}
-            onClick={() => setSelectedChatValue(data._id)}
-          >
-            <Image
-              alt="user-image"
-              width={30}
-              height={30}
-              className="rounded-full user-image"
-              src={data.is_group ? data.photo : data.users[0].avatar}
-            />
-            <div className="user-details-container w-full overflow-hidden">
-              <p className="chat-name text-black text-md whitespace-nowrap overflow-ellipsis overflow-hidden w-full overflow-ellipsis overflow-hidden">
-                {data.is_group ? data.chat_name : data.users[0].name}
-              </p>
-              {data.latest_message && (
-                <p className="last-message text-black text-sm whitespace-nowrap overflow-ellipsis overflow-hidden w-full overflow-ellipsis overflow-hidden">
-                  {data.is_group && `${data.latest_message.sender.name}: `}
-                  {data.latest_message.message}
+
+      {/* Chat List */}
+      <div className="w-full flex flex-col gap-3 overflow-y-auto overflow-x-hidden">
+        {filteredChatList.map((chat) => {
+          const chatName = chat.is_group
+            ? chat.chat_name
+            : chat.users[0]?.email;
+          const chatPhoto = chat.is_group ? chat.photo : chat.users[0]?.avatar;
+
+          return (
+            <div
+              key={chat._id}
+              className={`flex w-full border border-black p-2 gap-2 items-center rounded-md cursor-pointer chat-list ${
+                selectedChat === chat._id ? "chat-list-active" : ""
+              }`}
+              onClick={() => setSelectedChatValue(chat._id)}
+            >
+              <Image
+                alt="user-image"
+                width={30}
+                height={30}
+                className="rounded-full"
+                src={chatPhoto}
+              />
+              <div className="w-full overflow-hidden">
+                {/* Chat Name */}
+                <p
+                  title={chatName}
+                  className="text-black text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {chatName}
                 </p>
-              )}
+                {/* Latest Message */}
+                {chat.latest_message && (
+                  <p
+                    title={chat.latest_message.message}
+                    className="text-black text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
+                    {chat.is_group && `${chat.latest_message.sender.name}: `}
+                    {chat.latest_message.message}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

@@ -123,21 +123,6 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
                 </div>
               );
             })}
-            {/* 
-            <div className="flex gap-2 p-2 rounded-md cursor-pointer">
-              <div
-                className="text-xl text-semibold text-white  rounded-full h-11 w-11 flex items-center justify-center"
-                style={{ backgroundColor: "#6b6b6b" }}
-              >
-                J
-              </div>
-              <div className="">
-                <p className="text-md text-white">Raj</p>
-                <p className="text-sm" style={{ color: "#d9d6d6" }}>
-                  jeet@yopmail.com
-                </p>
-              </div>
-            </div> */}
           </div>
 
           <div className="flex justify-end space-x-4 border-t pt-2">

@@ -75,3 +75,9 @@ body,
 input {
   outline: none;
 }
+
+.chat-list:hover,
+.chat-list-active {
+  background-color: #efefef;
+  transition: background-color 0.3s;
+}

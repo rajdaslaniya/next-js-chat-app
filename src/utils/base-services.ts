@@ -2,8 +2,8 @@ import axios, { AxiosInstance } from "axios";
 import { toast } from "react-toastify";
 
 const apiService: AxiosInstance = axios.create({
-  // baseURL: "http://localhost:3000",
-  baseURL: "https://node-js-chat-app-1.onrender.com",
+  baseURL: "http://localhost:3000",
+  // baseURL: "https://node-js-chat-app-1.onrender.com",
 });
 
 apiService.interceptors.request.use(
@@ -13,8 +13,8 @@ apiService.interceptors.request.use(
       (loader[0] as HTMLElement).style.display = "flex";
     }
     const token = localStorage.getItem("token");
-    if (token && config.headers["x-requires-token"] !== "false") {
-      config.headers["Authorization"] = token;
+    if (token) {
+      config.headers["token"] = token;
     }
     return config;
   },

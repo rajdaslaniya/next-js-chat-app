@@ -10,52 +10,55 @@ import NewChat from "@/components/chat/NewChat";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const router = useRouter();
-  const [userDetail, setUserDetail] = useState<{
-    name: string;
-    email: string;
-    avatar: string;
-    _id: string;
-  }>({ avatar: "", email: "", name: "", _id: "" });
 
-  const [selectedChat, setSelectedChat] = useState("");
+  const [userDetail, setUserDetail] = useState({
+    name: "",
+    email: "",
+    avatar: "",
+    _id: "",
+  });
+  const [selectedChat, setSelectedChat] = useState<string>("");
+  const [openNewChat, setOpenNewChat] = useState<boolean>(false);
+  const [isOpenDropDown, setIsOpenDropDown] = useState<boolean>(false);
 
-  const [openNewChat, setOpenNewChat] = useState(false);
-
+  // Fetch user details on component mount
   useEffect(() => {
-    getUserDetails();
+    const fetchUserDetails = async () => {
+      try {
+        const response = await apiService.get("/chat/user");
+        if (response.status === 200) {
+          setUserDetail(response.data.data);
+        }
+      } catch (error: any) {
+        toast.error(
+          error.response?.data?.message || "Failed to fetch user details."
+        );
+      }
+    };
+    fetchUserDetails();
   }, []);
 
-  const getUserDetails = async () => {
-    try {
-      const apiResponse = await apiService.get("/chat/user");
-      if (apiResponse.status === 200) {
-        setUserDetail(apiResponse.data.data);
-      }
-    } catch (error: any) {
-      toast.error(error.response.data.message);
-    }
-  };
-
-  const [isOpenDropDown, setIsOpenDropDown] = useState(false);
-
-  const setSelectedChatValue = (id: string) => {
-    setSelectedChat(id);
-  };
-
-  const redirectToLogin = () => {
-    router.push("/login");
+  // Handlers
+  const handleLogout = () => {
     localStorage.clear();
+    router.push("/login");
   };
 
-  const changeCloseChatModalValue = () => {
-    setOpenNewChat(false);
+  const toggleNewChatModal = () => {
+    setOpenNewChat((prev) => !prev);
+  };
+
+  const toggleDropdown = () => {
+    setIsOpenDropDown((prev) => !prev);
   };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex grow-0 shrink-0 basis-auto  items-center justify-between p-3 bg-white shadow-md">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 bg-white shadow-md">
+        {/* User Details */}
         <div className="flex items-center gap-2">
           <div className="relative">
             {userDetail.avatar && (
@@ -63,19 +66,16 @@ const Dashboard = () => {
                 className="rounded-full cursor-pointer"
                 height={50}
                 width={50}
-                alt="profiles"
+                alt="Profile"
                 src={userDetail.avatar}
-                onClick={() => setIsOpenDropDown(!isOpenDropDown)}
+                onClick={toggleDropdown}
               />
             )}
             {isOpenDropDown && (
-              <div
-                style={{ top: "60px", zIndex: 1 }}
-                className="absolute rounded w-32  left-0 shadow-md p-4 bg-white"
-              >
+              <div className="absolute top-14 z-10 left-0 w-32 p-4 bg-white shadow-md rounded">
                 <button
-                  className="text-black cursor-pointer"
-                  onClick={() => redirectToLogin()}
+                  className="text-black cursor-pointer w-full text-left"
+                  onClick={handleLogout}
                 >
                   Logout
                 </button>
@@ -87,21 +87,30 @@ const Dashboard = () => {
             <p className="text-md text-black">{userDetail.email}</p>
           </div>
         </div>
-        {openNewChat && (
-          <NewChat closeChatModal={() => changeCloseChatModalValue()} />
-        )}
+
+        {/* New Chat Button */}
         <button
-          onClick={() => setOpenNewChat(true)}
-          className="border  border-black z-10 p-2 rounded-full text-md text-black"
+          onClick={toggleNewChatModal}
+          className="border border-black p-2 rounded-full"
         >
-          <Image src={plusSvg} alt="plus" height={20} width={20} />
+          <Image src={plusSvg} alt="Add Chat" height={20} width={20} />
         </button>
+        {openNewChat && <NewChat closeChatModal={toggleNewChatModal} />}
       </div>
-      <div className="flex gap-3 p-2 overflow-hidden h-full">
-        <div className="w-80 min-w-min left-part flex flex-col gap-3 overflow-hidden border-black border p-2 rounded-md ">
-          <ChatList setSelectedChatValue={setSelectedChatValue} />
+
+      {/* Main Content */}
+      <div className="flex gap-3 p-2 h-full">
+        {/* Chat List */}
+        <div className="w-80 min-w-min flex flex-col gap-3 overflow-hidden border border-black p-2 rounded-md">
+          <ChatList
+            openNewChat={openNewChat}
+            selectedChat={selectedChat}
+            setSelectedChatValue={setSelectedChat}
+          />
         </div>
-        <div className="shrink right-part p-2 border border-black rounded-md w-full flex flex-col">
+
+        {/* Chat Details */}
+        <div className="flex flex-col w-full p-2 border border-black rounded-md">
           {selectedChat ? (
             <ChatDetails selectedChat={selectedChat} userDetail={userDetail} />
           ) : (
