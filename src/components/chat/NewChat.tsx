@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "../ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Check } from "lucide-react";
+import apiService from "@/utils/base-services";
+import { toast } from "sonner";
 
 interface INewChat {
   closeChatModal: () => void;
@@ -15,38 +17,43 @@ interface INewChat {
 }
 
 const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
-  const [users, setUsers] = useState<{ _id: string; name: string; email: string }[]>([
-    {
-      _id: "7483274823",
-      name: "Raj Daslaniya",
-      email: "rajdaslaniya@gmail.com",
-    },
-    {
-      _id: "7483274",
-      name: "Jeet Desai",
-      email: "jeetdesai@gmail.com",
-    },
-  ]);
+  const [users, setUsers] = React.useState<{ _id: string; name: string; email: string }[]>([]);
 
-  const [selectedUsers, setSelectedUsers] = React.useState<{ _id: string; name: string; email: string }[]>([]);
+  React.useEffect(() => {
+    getUsers();
+  }, []);
 
-  const formik = useFormik<{
-    chat_name: string;
-    users: string[];
-  }>({
+  const getUsers = async () => {
+    try {
+      const apiResponse = await apiService.get(`/chat/users`);
+      setUsers(apiResponse.data.data);
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const createChat = async (values: { users: string }) => {
+    try {
+      const apiResponse = await apiService.post(`/chat`, {
+        users: [values.users._id],
+      });
+      if (apiResponse.status === 200) {
+        toast.success("Chat created successfully");
+        closeChatModal();
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const formik = useFormik<{ users: string }>({
     enableReinitialize: true,
-    initialValues: { chat_name: "demo", users: [] },
+    initialValues: { users: null },
     validationSchema: Yup.object({
-      chat_name: Yup.string()
-        .required("Name is required")
-        .min(3, "Minimum 3 characters are allowed")
-        .max(50, "Maximum 50 characters are allowed")
-        .matches(/^\S+(\s\S+)?$/, "Name must contain a space in between and no spaces at the start or end")
-        .trim(),
-      users: Yup.array().min(1, "You must select at least one users").required("This field is required"),
+      users: Yup.object().required("This field is required"),
     }),
     onSubmit: (values) => {
-      console.log(values);
+      createChat(values);
     },
   });
 
@@ -68,14 +75,15 @@ const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
                     key={user._id}
                     className="flex items-center px-2"
                     onSelect={() => {
-                      if (formik.values.users.includes(user)) {
-                        formik.setFieldValue(
-                          "users",
-                          formik.values.users.filter((selectedUser) => selectedUser !== user)
-                        );
-                      } else {
-                        formik.setFieldValue("users", [...formik.values.users, user]);
-                      }
+                      // if (formik.values.users.includes(user)) {
+                      //   formik.setFieldValue(
+                      //     "users",
+                      //     formik.values.users.filter((selectedUser) => selectedUser !== user)
+                      //   );
+                      // } else {
+                      //   formik.setFieldValue("users", [...formik.values.users, user]);
+                      // }
+                      formik.setFieldValue("users", user);
                     }}
                   >
                     <Avatar>
@@ -86,26 +94,27 @@ const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
                       <p className="text-sm font-medium leading-none">{user.name}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
-                    {formik.values.users.includes(user) ? <Check className="ml-auto flex h-5 w-5 text-primary" /> : null}
+                    {/* {formik.values.users.includes(user) ? <Check className="ml-auto flex h-5 w-5 text-primary" /> : null} */}
+                    {formik.values.users === user ? <Check className="ml-auto flex h-5 w-5 text-primary" /> : null}
                   </CommandItem>
                 ))}
               </CommandGroup>
             </CommandList>
           </Command>
           <DialogFooter className="flex items-center border-t p-4 sm:justify-between">
-            {formik.values.users.length > 0 ? (
+            {formik.values.users ? (
               <div className="flex -space-x-2 overflow-hidden">
-                {formik.values.users.map((user) => (
-                  <Avatar key={user.email} className="inline-block border-2 border-background">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
-                  </Avatar>
-                ))}
+                {/* {formik.values.users.map((user) => ( */}
+                <Avatar key={formik.values.users.email} className="inline-block border-2 border-background">
+                  <AvatarImage src={formik.values.users.avatar} />
+                  <AvatarFallback>{formik.values.users.name[0]}</AvatarFallback>
+                </Avatar>
+                {/* ))} */}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Select users to add to this thread.</p>
             )}
-            <Button type="submit" onClick={() => formik.handleSubmit()}>
+            <Button disabled={!formik.isValid} type="submit" onClick={() => formik.handleSubmit()}>
               Continue
             </Button>
           </DialogFooter>

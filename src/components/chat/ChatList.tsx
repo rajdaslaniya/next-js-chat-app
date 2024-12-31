@@ -1,86 +1,54 @@
-import React, { useState } from "react";
+import React from "react";
 import { Separator } from "../ui/separator";
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
+import apiService from "@/utils/base-services";
+import { toast } from "sonner";
 
-const ChatList = () => {
-  const [searchText, setSearchText] = useState("");
-  const [items, setItems] = useState([
+interface IChatList {
+  setSelectedChatValue: (id: string) => void;
+  selectedChat: string;
+}
+
+const ChatList: React.FC<IChatList> = ({ setSelectedChatValue, selectedChat }) => {
+  const [searchText, setSearchText] = React.useState("");
+  const [chatList, setChatList] = React.useState<
     {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      email: "williamsmith@example.com",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: true,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      email: "williamsmith@example.com",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-    {
-      id: "6c84fb90-12c4-11e1-840d-7b25c5ee775a",
-      name: "William Smith",
-      text: "Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's crucial that we align on our next steps to ensure the project's success.\n\nPlease come prepared with any questions or insights you may have. Looking forward to our meeting!\n\nBest regards, William",
-      date: "2023-10-22T09:00:00",
-      read: false,
-    },
-  ]);
+      _id: string;
+      users: { avatar: string; email: string; name: string; _id: string }[];
+      photo: string;
+      chat_name: string;
+      is_group: boolean;
+      group_admin: string;
+      latest_message: {
+        chat_id: string;
+        message: string;
+        createdAt: string;
+        sender: {
+          email: string;
+          name: string;
+          avatar: string;
+        };
+      };
+    }[]
+  >([]);
+
+  React.useEffect(() => {
+    getChatList();
+  }, []);
+
+  const getChatList = async () => {
+    try {
+      const apiResponse = await apiService.get("/chat/chats");
+      if (apiResponse.status === 200) {
+        setChatList(apiResponse.data.data);
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
 
   return (
     <>
@@ -96,31 +64,27 @@ const ChatList = () => {
       </div>
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="flex flex-col gap-2 p-4 pt-0">
-          {items.map((item) => (
+          {chatList.map((data) => (
             <button
-              key={item.id}
+              key={data._id}
               className={cn(
-                "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent"
-                // mail.selected === item.id && "bg-muted"
+                "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
+                selectedChat === data._id && "bg-muted"
               )}
+              onClick={() => setSelectedChatValue(data._id)}
             >
               <div className="flex w-full flex-col gap-1">
                 <div className="flex items-center">
                   <div className="flex items-center gap-2">
-                    <div className="font-semibold">{item.name}</div>
-                    {!item.read && <span className="flex h-2 w-2 rounded-full bg-blue-600" />}
+                    <div className="font-semibold">{data.is_group ? data.chat_name : data.users[0].name}</div>
+                    {/* {!item.read && <span className="flex h-2 w-2 rounded-full bg-blue-600" />} */}
                   </div>
-                  <div
-                    className={cn(
-                      "ml-auto text-xs"
-                      // mail.selected === item.id ? "text-foreground" : "text-muted-foreground"
-                    )}
-                  >
+                  <div className={cn("ml-auto text-xs", selectedChat === data._id ? "text-foreground" : "text-muted-foreground")}>
                     about 1 year ago
                   </div>
                 </div>
               </div>
-              <div className="line-clamp-2 text-xs text-muted-foreground">{item.text.substring(0, 300)}</div>
+              {data.latest_message && <div className="line-clamp-2 text-xs text-muted-foreground">{data.latest_message.message}</div>}
             </button>
           ))}
         </div>

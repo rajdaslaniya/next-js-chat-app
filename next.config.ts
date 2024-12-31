@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactStrictMode: true,
+  reactStrictMode: false,
   images: {
-    domains: ["mostaql.hsoubcdn.com", "encrypted-tbn0.gstatic.com"],
+    domains: ["mostaql.hsoubcdn.com", "encrypted-tbn0.gstatic.com", "cdn-icons-png.flaticon.com"],
   },
 };
 

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 const apiService: AxiosInstance = axios.create({
   baseURL: "http://localhost:8080",
@@ -13,8 +13,8 @@ apiService.interceptors.request.use(
       (loader[0] as HTMLElement).style.display = "flex";
     }
     const token = localStorage.getItem("token");
-    if (token && config.headers["x-requires-token"] !== "false") {
-      config.headers["Authorization"] = token;
+    if (token) {
+      config.headers["token"] = token;
     }
     return config;
   },

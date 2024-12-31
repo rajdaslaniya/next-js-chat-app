@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import withAuth from "@/components/protected/withAuth";
 import ChatList from "@/components/chat/ChatList";
 import ChatDetails from "@/components/chat/ChatDetails";
-import { plusSvg } from "@/assets";
 import NewChat from "@/components/chat/NewChat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,6 +10,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import apiService from "@/utils/base-services";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -19,23 +19,33 @@ const Dashboard = () => {
     name: string;
     email: string;
     avatar: string;
-    id: string;
-  }>({ avatar: "", email: "", name: "", id: "" });
-
+    _id: string;
+  }>({ avatar: "", email: "", name: "", _id: "" });
+  const [selectedChat, setSelectedChat] = useState("");
   const [openNewChat, setOpenNewChat] = useState(false);
 
   useEffect(() => {
-    const userDetailsString = localStorage.getItem("userDetails");
-    if (userDetailsString) {
-      const userDetails: {
-        name: string;
-        email: string;
-        avatar: string;
-        id: string;
-      } = JSON.parse(userDetailsString);
-      if (userDetails.name && userDetails.email && userDetails.id && userDetails.avatar) setUserDetail(userDetails);
-    }
+    getUserDetails();
   }, []);
+
+  const getUserDetails = async () => {
+    try {
+      const apiResponse = await apiService.get("/chat/user");
+      if (apiResponse.status === 200) {
+        setUserDetail(apiResponse.data.data);
+      }
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const setSelectedChatValue = (id: string) => {
+    setSelectedChat(id);
+  };
+
+  const changeCloseChatModalValue = () => {
+    setOpenNewChat(false);
+  };
 
   const redirectToLogin = () => {
     router.push("/login");
@@ -81,16 +91,8 @@ const Dashboard = () => {
         </TooltipProvider>
       </div>
 
-      {openNewChat && <NewChat open={openNewChat} closeChatModal={() => setOpenNewChat(false)} />}
+      {openNewChat && <NewChat open={openNewChat} closeChatModal={changeCloseChatModalValue} />}
 
-      {/* <div className="flex gap-3 p-2 overflow-hidden h-full">
-        <div className="w-80 min-w-min left-part flex flex-col gap-3 overflow-hidden bg-gray-500 p-2 rounded-md relative">
-          <ChatList />
-        </div>
-        <div className="shrink right-part p-2 border border-gray-500 rounded-md w-full flex flex-col">
-          <ChatDetails />
-        </div>
-      </div> */}
       <ResizablePanelGroup
         direction="horizontal"
         onLayout={(sizes: number[]) => {
@@ -99,11 +101,15 @@ const Dashboard = () => {
         className="h-full items-stretch"
       >
         <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
-          <ChatList />
+          <ChatList selectedChat={selectedChat} setSelectedChatValue={setSelectedChatValue} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={40}>
-          <ChatDetails />
+          {selectedChat ? (
+            <ChatDetails selectedChat={selectedChat} userDetail={userDetail} />
+          ) : (
+            <div className="flex items-center justify-center h-full">Select chat</div>
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
