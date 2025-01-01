@@ -1,5 +1,5 @@
 // "use client";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import withAuth from "@/components/protected/withAuth";
@@ -103,6 +103,7 @@ const Dashboard: React.FC = () => {
         {/* Chat List */}
         <div className="w-80 min-w-min flex flex-col gap-3 overflow-hidden border border-black p-2 rounded-md">
           <ChatList
+            userDetail={userDetail}
             openNewChat={openNewChat}
             selectedChat={selectedChat}
             setSelectedChatValue={setSelectedChat}

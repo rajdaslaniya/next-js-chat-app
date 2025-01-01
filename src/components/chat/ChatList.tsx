@@ -3,6 +3,7 @@ import Image from "next/image";
 import { searchSvg } from "@/assets";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
+import { useSocket } from "@/context/socket";
 
 interface User {
   avatar: string;
@@ -36,13 +37,22 @@ interface IChatList {
   setSelectedChatValue: (id: string) => void;
   openNewChat: boolean;
   selectedChat: string;
+  userDetail: {
+    name: string;
+    email: string;
+    avatar: string;
+    _id: string;
+  };
 }
 
 const ChatList: React.FC<IChatList> = ({
   setSelectedChatValue,
   openNewChat,
   selectedChat,
+  userDetail,
 }) => {
+  const socket = useSocket();
+
   const [searchText, setSearchText] = useState("");
   const [chatList, setChatList] = useState<Chat[]>([]);
   const [filteredChatList, setFilteredChatList] = useState<Chat[]>([]);
@@ -79,6 +89,32 @@ const ChatList: React.FC<IChatList> = ({
     });
     setFilteredChatList(filtered);
   }, [searchText, chatList]);
+
+  useEffect(() => {
+    if (userDetail._id) {
+      socket?.emit("userOnline", userDetail._id);
+
+      socket.on("receivingLatestMessage", (data) => {
+        const { latest_message, chat_id } = data;
+        setChatList((prev) => {
+          const updatedChatList = prev.map((chat) => {
+            if (chat._id === chat_id) {
+              return {
+                ...chat,
+                latest_message,
+              };
+            }
+            return chat;
+          });
+          return updatedChatList;
+        });
+      });
+      return () => {
+        socket?.off("userOnline");
+        socket?.emit("userOffline", userDetail._id);
+      };
+    }
+  }, [userDetail, socket]);
 
   return (
     <>
