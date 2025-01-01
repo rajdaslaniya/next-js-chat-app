@@ -1,5 +1,5 @@
 import { useFormik } from "formik";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import * as Yup from "yup";
 import Image from "next/image";
 import { searchSvg } from "@/assets";
@@ -11,40 +11,41 @@ interface INewChat {
 }
 
 const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
-  useEffect(() => {
-    getUsers();
-  }, []);
-
   const [users, setUsers] = useState<
     { _id: string; name: string; email: string }[]
   >([]);
 
-  const getUsers = async () => {
+  const getUsers = useCallback(async () => {
     try {
       const apiResponse = await apiService.get(`/chat/users`);
       setUsers(apiResponse.data.data);
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
-  };
+  }, []);
 
-  const createChat = async (values: { users: string }) => {
-    try {
-      const apiResponse = await apiService.post(`/chat`, {
-        users: [values.users],
-      });
-      if (apiResponse.status === 200) {
-        toast.success("Chat created successfully");
-        closeChatModal();
+  useEffect(() => {
+    getUsers();
+  }, [getUsers]);
+
+  const createChat = useCallback(
+    async (values: { users: string }) => {
+      try {
+        const apiResponse = await apiService.post(`/chat`, {
+          users: [values.users],
+        });
+        if (apiResponse.status === 200) {
+          toast.success(apiResponse.data.message);
+          closeChatModal();
+        }
+      } catch (error: any) {
+        toast.error(error.response.data.message);
       }
-    } catch (error: any) {
-      toast.error(error.response.data.message);
-    }
-  };
+    },
+    [closeChatModal]
+  );
 
-  const formik = useFormik<{
-    users: string;
-  }>({
+  const formik = useFormik<{ users: string }>({
     initialValues: { users: "" },
     validationSchema: Yup.object({
       users: Yup.string().required("This field is required"),
@@ -53,6 +54,15 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
       createChat(values);
     },
   });
+
+  const memoizedUsers = useMemo(() => users, [users]);
+
+  const handleUserClick = useCallback(
+    (userId: string) => {
+      formik.setFieldValue("users", userId);
+    },
+    [formik]
+  );
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-hidden p-3">
@@ -74,6 +84,7 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
               ✕
             </button>
           </div>
+
           <div className="relative mt-2 mb-2">
             <Image
               src={searchSvg}
@@ -85,44 +96,40 @@ const NewChat: React.FC<INewChat> = ({ closeChatModal }) => {
             />
             <input
               placeholder="Search here"
-              // value={searchText}
-              // onChange={(event) => setSearchText(event.target.value)}
               className="w-full p-2 border border-black rounded-md text-black pl-8"
             />
           </div>
+
           <div className="flex flex-col gap-3 mb-2">
-            {users.map((data) => {
-              return (
+            {memoizedUsers.map((data) => (
+              <div
+                key={data._id}
+                className="flex gap-2 p-2 rounded-md cursor-pointer"
+                onClick={() => handleUserClick(data._id)}
+                style={{
+                  backgroundColor:
+                    formik.values.users === data._id
+                      ? "#6b6b6b"
+                      : "transparent",
+                }}
+              >
                 <div
-                  className="flex gap-2 p-2 rounded-md cursor-pointer"
-                  onClick={() => formik.setFieldValue("users", data._id)}
+                  className="text-xl text-semibold text-white rounded-full h-11 w-11 flex items-center justify-center"
                   style={{
                     backgroundColor:
-                      formik.values.users === data._id
-                        ? "#6b6b6b"
-                        : "transparent",
+                      formik.values.users === data._id ? "#aba3a3" : "#6b6b6b",
                   }}
                 >
-                  <div
-                    className="text-xl text-semibold text-white  rounded-full h-11 w-11 flex items-center justify-center"
-                    style={{
-                      backgroundColor:
-                        formik.values.users === data._id
-                          ? "#aba3a3"
-                          : "#6b6b6b",
-                    }}
-                  >
-                    {data.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="">
-                    <p className="text-md text-white">{data.name}</p>
-                    <p className="text-sm" style={{ color: "#d9d6d6" }}>
-                      {data.email}
-                    </p>
-                  </div>
+                  {data.name.charAt(0).toUpperCase()}
                 </div>
-              );
-            })}
+                <div className="">
+                  <p className="text-md text-white">{data.name}</p>
+                  <p className="text-sm" style={{ color: "#d9d6d6" }}>
+                    {data.email}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="flex justify-end space-x-4 border-t pt-2">

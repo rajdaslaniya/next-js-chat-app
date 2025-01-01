@@ -1,5 +1,4 @@
-// "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import withAuth from "@/components/protected/withAuth";
@@ -9,11 +8,12 @@ import { plusSvg } from "@/assets";
 import NewChat from "@/components/chat/NewChat";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
+import { IUserDetails } from "@/utils/interface";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
 
-  const [userDetail, setUserDetail] = useState({
+  const [userDetail, setUserDetail] = useState<IUserDetails>({
     name: "",
     email: "",
     avatar: "",
@@ -23,7 +23,6 @@ const Dashboard: React.FC = () => {
   const [openNewChat, setOpenNewChat] = useState<boolean>(false);
   const [isOpenDropDown, setIsOpenDropDown] = useState<boolean>(false);
 
-  // Fetch user details on component mount
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -40,19 +39,20 @@ const Dashboard: React.FC = () => {
     fetchUserDetails();
   }, []);
 
-  // Handlers
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.clear();
     router.push("/login");
-  };
+  }, [router]);
 
-  const toggleNewChatModal = () => {
+  const toggleNewChatModal = useCallback(() => {
     setOpenNewChat((prev) => !prev);
-  };
+  }, []);
 
-  const toggleDropdown = () => {
+  const toggleDropdown = useCallback(() => {
     setIsOpenDropDown((prev) => !prev);
-  };
+  }, []);
+
+  const userDetailMemo = useMemo(() => userDetail, [userDetail]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -83,8 +83,8 @@ const Dashboard: React.FC = () => {
             )}
           </div>
           <div>
-            <p className="text-xl text-black">{userDetail.name}</p>
-            <p className="text-md text-black">{userDetail.email}</p>
+            <p className="text-xl text-black">{userDetailMemo.name}</p>
+            <p className="text-md text-black">{userDetailMemo.email}</p>
           </div>
         </div>
 
@@ -103,7 +103,7 @@ const Dashboard: React.FC = () => {
         {/* Chat List */}
         <div className="w-80 min-w-min flex flex-col gap-3 overflow-hidden border border-black p-2 rounded-md">
           <ChatList
-            userDetail={userDetail}
+            userDetail={userDetailMemo}
             openNewChat={openNewChat}
             selectedChat={selectedChat}
             setSelectedChatValue={setSelectedChat}
@@ -113,7 +113,10 @@ const Dashboard: React.FC = () => {
         {/* Chat Details */}
         <div className="flex flex-col w-full p-2 border border-black rounded-md">
           {selectedChat ? (
-            <ChatDetails selectedChat={selectedChat} userDetail={userDetail} />
+            <ChatDetails
+              selectedChat={selectedChat}
+              userDetail={userDetailMemo}
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               Select chat

@@ -1,41 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import Image from "next/image";
 import { deleteSvg, messageSvg } from "@/assets";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
-import moment from "moment";
 import { useSocket } from "@/context/socket";
-
-interface IMessage {
-  _id: string;
-  message: string;
-  createdAt: string;
-  updatedAt: string;
-  sender: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}
-
-interface IGroupDetails {
-  chat_name: string;
-  group_admin: string;
-  is_group: boolean;
-  photo: string;
-  users: { avatar: string; email: string; name: string }[];
-}
-
-interface IChatDetails {
-  selectedChat: string;
-  userDetail: {
-    name: string;
-    email: string;
-    avatar: string;
-    _id: string;
-  };
-}
+import MessageItem from "./Message";
+import { IChatDetails, IGroupDetails, IMessage } from "@/utils/interface";
 
 const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
   const [message, setMessage] = useState("");
@@ -78,7 +54,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     };
   }, [socket]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const { status, data } = await apiService.get(`/message/${selectedChat}`);
       if (status === 200) {
@@ -87,9 +63,9 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to fetch messages.");
     }
-  };
+  }, [selectedChat]);
 
-  const fetchChatDetails = async () => {
+  const fetchChatDetails = useCallback(async () => {
     try {
       const { status, data } = await apiService.get(`/chat/${selectedChat}`);
       if (status === 200) {
@@ -100,9 +76,9 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
         error.response?.data?.message || "Failed to fetch chat details."
       );
     }
-  };
+  }, [selectedChat]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!message.trim()) {
       return toast.error("Please write a message.");
     }
@@ -117,18 +93,33 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to send message.");
     }
-  };
+  }, [message, selectedChat]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     scrollContainerRef.current?.scrollTo({
       top: scrollContainerRef.current.scrollHeight,
       behavior: "smooth",
     });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
+
+  const renderedMessages = useMemo(
+    () =>
+      messages.map((data) => {
+        const isCurrentUser = data.sender._id === userDetail._id;
+        return (
+          <MessageItem
+            key={data._id}
+            messageData={data}
+            isCurrentUser={isCurrentUser}
+          />
+        );
+      }),
+    [messages, userDetail]
+  );
 
   return (
     <>
@@ -163,43 +154,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
           ref={scrollContainerRef}
           className="absolute left-0 right-0 bottom-0 flex flex-col gap-3 max-h-full overflow-y-auto"
         >
-          {messages.map((data) => {
-            const isCurrentUser = data.sender._id === userDetail._id;
-            return (
-              <div
-                className={`flex gap-3 ${
-                  isCurrentUser ? "flex-row-reverse" : ""
-                }`}
-                key={data._id}
-              >
-                <Image
-                  className="rounded-full max-h-fit"
-                  height={25}
-                  width={25}
-                  alt="user-avatar"
-                  src={data.sender.avatar}
-                />
-                <div
-                  className={`p-2 rounded-md max-w-screen-sm text-sm ${
-                    isCurrentUser
-                      ? "bg-black text-white"
-                      : "bg-gray-200 text-black"
-                  }`}
-                >
-                  <p
-                    className="text-xs"
-                    style={{ color: isCurrentUser ? "#44ef5b" : "#ef4444" }}
-                  >
-                    {data.sender.name}
-                  </p>
-                  <p>{data.message}</p>
-                  <p className="text-xs text-right">
-                    {moment(data.createdAt).format("DD/MM/YYYY, h:mm A")}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          {renderedMessages}
         </div>
       </div>
       <div className="flex items-center gap-2 mt-2">

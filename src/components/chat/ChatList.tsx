@@ -1,49 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { searchSvg } from "@/assets";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
 import { useSocket } from "@/context/socket";
-
-interface User {
-  avatar: string;
-  email: string;
-  name: string;
-  _id: string;
-}
-
-interface LatestMessage {
-  chat_id: string;
-  message: string;
-  createdAt: string;
-  sender: {
-    email: string;
-    name: string;
-    avatar: string;
-  };
-}
-
-interface Chat {
-  _id: string;
-  users: User[];
-  photo: string;
-  chat_name: string;
-  is_group: boolean;
-  group_admin: string;
-  latest_message?: LatestMessage;
-}
-
-interface IChatList {
-  setSelectedChatValue: (id: string) => void;
-  openNewChat: boolean;
-  selectedChat: string;
-  userDetail: {
-    name: string;
-    email: string;
-    avatar: string;
-    _id: string;
-  };
-}
+import { IChat, IChatList } from "@/utils/interface";
 
 const ChatList: React.FC<IChatList> = ({
   setSelectedChatValue,
@@ -54,32 +15,28 @@ const ChatList: React.FC<IChatList> = ({
   const socket = useSocket();
 
   const [searchText, setSearchText] = useState("");
-  const [chatList, setChatList] = useState<Chat[]>([]);
-  const [filteredChatList, setFilteredChatList] = useState<Chat[]>([]);
+  const [chatList, setChatList] = useState<IChat[]>([]);
 
-  // Fetch chat list when the component mounts or when `openNewChat` changes
-  useEffect(() => {
-    fetchChatList();
-  }, [openNewChat]);
-
-  const fetchChatList = async () => {
+  const fetchChatList = useCallback(async () => {
     try {
       const apiResponse = await apiService.get("/chat/chats");
       if (apiResponse.status === 200) {
         const chats = apiResponse.data.data;
         setChatList(chats);
-        setFilteredChatList(chats); // Initialize filtered chat list
       }
     } catch (error: any) {
       toast.error(
         error.response?.data?.message || "Failed to fetch chat list."
       );
     }
-  };
+  }, []);
 
-  // Update the filtered chat list when `searchText` changes
   useEffect(() => {
-    const filtered = chatList.filter((chat) => {
+    fetchChatList();
+  }, [openNewChat, fetchChatList]);
+
+  const filteredChatList = useMemo(() => {
+    return chatList.filter((chat) => {
       const chatName = chat.is_group ? chat.chat_name : chat.users[0]?.email;
       const latestMessage = chat.latest_message?.message || "";
       return (
@@ -87,7 +44,6 @@ const ChatList: React.FC<IChatList> = ({
         latestMessage.toLowerCase().includes(searchText.toLowerCase())
       );
     });
-    setFilteredChatList(filtered);
   }, [searchText, chatList]);
 
   useEffect(() => {
@@ -109,12 +65,20 @@ const ChatList: React.FC<IChatList> = ({
           return updatedChatList;
         });
       });
+
       return () => {
         socket?.off("userOnline");
         socket?.emit("userOffline", userDetail._id);
       };
     }
   }, [userDetail, socket]);
+
+  const handleSelectChat = useCallback(
+    (chatId: string) => {
+      setSelectedChatValue(chatId);
+    },
+    [setSelectedChatValue]
+  );
 
   return (
     <>
@@ -151,7 +115,7 @@ const ChatList: React.FC<IChatList> = ({
               className={`flex w-full border border-black p-2 gap-2 items-center rounded-md cursor-pointer chat-list ${
                 selectedChat === chat._id ? "chat-list-active" : ""
               }`}
-              onClick={() => setSelectedChatValue(chat._id)}
+              onClick={() => handleSelectChat(chat._id)}
             >
               <Image
                 alt="user-image"
