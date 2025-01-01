@@ -101,15 +101,12 @@ const Dashboard: React.FC = () => {
       {/* Main Content */}
       <div className="flex gap-3 p-2 h-full">
         {/* Chat List */}
-        <div className="w-80 min-w-min flex flex-col gap-3 overflow-hidden border border-black p-2 rounded-md">
-          <ChatList
-            userDetail={userDetailMemo}
-            openNewChat={openNewChat}
-            selectedChat={selectedChat}
-            setSelectedChatValue={setSelectedChat}
-          />
-        </div>
-
+        <ChatList
+          userDetail={userDetailMemo}
+          openNewChat={openNewChat}
+          selectedChat={selectedChat}
+          setSelectedChatValue={setSelectedChat}
+        />
         {/* Chat Details */}
         <div className="flex flex-col w-full p-2 border border-black rounded-md">
           {selectedChat ? (

@@ -46,6 +46,8 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
   useEffect(() => {
     const handleNewMessage = (data: { data: IMessage }) => {
       setMessages((prevMessages) => [...prevMessages, data.data]);
+      data.data.sender._id != userDetail._id &&
+        toast.success("New message received.");
     };
     socket?.on("receiveNewMessage", handleNewMessage);
 
