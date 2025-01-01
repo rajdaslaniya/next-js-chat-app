@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
               />
             )}
             {isOpenDropDown && (
-              <div className="absolute top-14 z-10 left-0 w-32 p-4 bg-white shadow-md rounded">
+              <div className="absolute top-14 z-100 left-0 w-32 p-4 bg-white shadow-md rounded">
                 <button
                   className="text-black cursor-pointer w-full text-left"
                   onClick={handleLogout}

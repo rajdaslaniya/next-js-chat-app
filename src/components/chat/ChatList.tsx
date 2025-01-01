@@ -66,10 +66,13 @@ const ChatList: React.FC<IChatList> = ({
           return updatedChatList;
         });
       });
-
-      return () => {
-        socket?.off("userOnline");
+      const handleTabClose = () => {
         socket?.emit("userOffline", userDetail._id);
+      };
+      window.addEventListener("beforeunload", handleTabClose);
+      return () => {
+        socket?.emit("userOffline", userDetail._id);
+        window.removeEventListener("beforeunload", handleTabClose);
       };
     }
   }, [userDetail, socket]);

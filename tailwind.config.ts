@@ -21,6 +21,9 @@ export default {
         "6": "6px",
         "8": "8px",
       },
+      zIndex: {
+        "100": "100",
+      },
     },
   },
   plugins: [],
