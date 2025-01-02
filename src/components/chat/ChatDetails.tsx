@@ -9,6 +9,8 @@ import { ScrollArea } from "../ui/scroll-area";
 import apiService from "@/utils/base-services";
 import { toast } from "sonner";
 import moment from "moment";
+import { IGroupDetails, IMessage } from "@/types/chat";
+import { useSocket } from "@/context/socket";
 
 interface IChatDetails {
   selectedChat: string;
@@ -22,68 +24,88 @@ interface IChatDetails {
 
 const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
   const [message, setMessage] = React.useState("");
-  const [messages, setMessages] = React.useState<
-    {
-      _id: string;
-      message: string;
-      createdAt: string;
-      updatedAt: string;
-      sender: { _id: string; name: string; email: string; avatar: string };
-    }[]
-  >([]);
-  const [groupDetails, setGroupDetails] = React.useState<{
-    chat_name: string;
-    group_admin: string;
-    is_group: boolean;
-    photo: string;
-    users: { avatar: string; email: string; name: string }[];
-  }>({ chat_name: "", group_admin: "", is_group: true, photo: "", users: [] });
+  const [messages, setMessages] = React.useState<IMessage[]>([]);
+  const [groupDetails, setGroupDetails] = React.useState<IGroupDetails>({ chat_name: "", group_admin: "", is_group: true, photo: "", users: [] });
+
+  const socket = useSocket();
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (selectedChat) {
-      getMessages();
-      getChatDetails();
+      fetchMessages();
+      fetchChatDetails();
     }
   }, [selectedChat]);
 
-  const getMessages = async () => {
+  React.useEffect(() => {
+    if (socket && selectedChat) {
+      socket.emit("joinChatRoom", selectedChat);
+    }
+    return () => {
+      socket?.emit("leaveChatRoom", selectedChat);
+    };
+  }, [selectedChat, socket]);
+
+  React.useEffect(() => {
+    const handleNewMessage = (data: { data: IMessage }) => {
+      setMessages((prevMessages) => [...prevMessages, data.data]);
+    };
+    socket?.on("receiveNewMessage", handleNewMessage);
+
+    return () => {
+      socket?.off("receiveNewMessage", handleNewMessage);
+    };
+  }, [socket]);
+
+  const fetchMessages = async () => {
     try {
-      const apiResponse = await apiService.get(`/message/${selectedChat}`);
-      if (apiResponse.status === 200) {
-        setMessages(apiResponse.data.data);
+      const { status, data } = await apiService.get(`/message/${selectedChat}`);
+      if (status === 200) {
+        setMessages(data.data);
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to fetch messages.");
     }
   };
 
-  const getChatDetails = async () => {
+  const fetchChatDetails = async () => {
     try {
-      const apiResponse = await apiService.get(`/chat/${selectedChat}`);
-      if (apiResponse.status === 200) {
-        setGroupDetails(apiResponse.data.data);
+      const { status, data } = await apiService.get(`/chat/${selectedChat}`);
+      if (status === 200) {
+        setGroupDetails(data.data);
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to fetch chat details.");
     }
   };
 
   const sendMessage = async () => {
     if (!message.trim()) {
-      return toast.error("Please write message");
+      return toast.error("Please write a message.");
     }
     try {
-      const apiResponse = await apiService.post(`/message/${selectedChat}`, {
+      const { status } = await apiService.post(`/message/${selectedChat}`, {
         message: message.trim(),
       });
-      if (apiResponse.status === 200) {
-        toast.success("Message send successfully");
+      if (status === 200) {
+        toast.success("Message sent successfully.");
         setMessage("");
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to send message.");
     }
   };
+
+  const scrollToBottom = () => {
+    scrollContainerRef.current?.scrollTo({
+      top: scrollContainerRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <>
@@ -104,13 +126,14 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
             </div>
           </div>
           <Separator />
-          <ScrollArea>
+          <ScrollArea ref={scrollContainerRef}>
             <div className="space-y-4 p-4 overflow-y-auto">
               {messages.map((message, index) => {
                 const isCurrentUser = message.sender._id === userDetail._id;
                 return (
                   <div key={index} className={cn("flex w-max max-w-[75%] flex-col gap-1", isCurrentUser ? "ml-auto" : "")}>
                     <div
+                      style={{ lineBreak: "anywhere" }}
                       className={cn(
                         "flex gap-2 items-center px-3 py-2 text-sm rounded-lg",
                         isCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted"

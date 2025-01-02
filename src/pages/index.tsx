@@ -15,14 +15,9 @@ import { toast } from "sonner";
 
 const Dashboard = () => {
   const router = useRouter();
-  const [userDetail, setUserDetail] = useState<{
-    name: string;
-    email: string;
-    avatar: string;
-    _id: string;
-  }>({ avatar: "", email: "", name: "", _id: "" });
-  const [selectedChat, setSelectedChat] = useState("");
-  const [openNewChat, setOpenNewChat] = useState(false);
+  const [userDetail, setUserDetail] = useState({ avatar: "", email: "", name: "", _id: "" });
+  const [selectedChat, setSelectedChat] = useState<string>("");
+  const [openNewChat, setOpenNewChat] = useState<boolean>(false);
 
   useEffect(() => {
     getUserDetails();
@@ -35,21 +30,17 @@ const Dashboard = () => {
         setUserDetail(apiResponse.data.data);
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to fetch user details.");
     }
   };
 
-  const setSelectedChatValue = (id: string) => {
-    setSelectedChat(id);
+  const toggleNewChatModal = () => {
+    setOpenNewChat((prev) => !prev);
   };
 
-  const changeCloseChatModalValue = () => {
-    setOpenNewChat(false);
-  };
-
-  const redirectToLogin = () => {
-    router.push("/login");
+  const handleLogout = () => {
     localStorage.clear();
+    router.push("/login");
   };
 
   const defaultLayout = [150, 300];
@@ -73,7 +64,7 @@ const Dashboard = () => {
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => redirectToLogin()}>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -81,7 +72,7 @@ const Dashboard = () => {
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={() => setOpenNewChat(true)}>
+              <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={toggleNewChatModal}>
                 <Plus className="h-4 w-4" />
                 <span className="sr-only">New message</span>
               </Button>
@@ -91,7 +82,7 @@ const Dashboard = () => {
         </TooltipProvider>
       </div>
 
-      {openNewChat && <NewChat open={openNewChat} closeChatModal={changeCloseChatModalValue} />}
+      {openNewChat && <NewChat open={openNewChat} closeChatModal={toggleNewChatModal} />}
 
       <ResizablePanelGroup
         direction="horizontal"
@@ -101,7 +92,7 @@ const Dashboard = () => {
         className="h-full items-stretch"
       >
         <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
-          <ChatList selectedChat={selectedChat} setSelectedChatValue={setSelectedChatValue} />
+          <ChatList userDetail={userDetail} openNewChat={openNewChat} selectedChat={selectedChat} setSelectedChatValue={setSelectedChat} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={40}>
