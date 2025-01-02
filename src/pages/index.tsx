@@ -1,25 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
+import { LogOut, Menu, Plus } from "lucide-react";
+import { toast } from "sonner";
+
 import withAuth from "@/components/protected/withAuth";
 import ChatList from "@/components/chat/ChatList";
 import ChatDetails from "@/components/chat/ChatDetails";
 import NewChat from "@/components/chat/NewChat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
 import apiService from "@/utils/base-services";
-import { toast } from "sonner";
 
 const Dashboard = () => {
   const router = useRouter();
-  const [userDetail, setUserDetail] = useState({ avatar: "", email: "", name: "", _id: "" });
-  const [selectedChat, setSelectedChat] = useState<string>("");
-  const [openNewChat, setOpenNewChat] = useState<boolean>(false);
+  const [userDetail, setUserDetail] = React.useState({ avatar: "", email: "", name: "", _id: "" });
+  const [selectedChat, setSelectedChat] = React.useState<string>("");
+  const [openNewChat, setOpenNewChat] = React.useState<boolean>(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     getUserDetails();
   }, []);
 
@@ -34,14 +36,16 @@ const Dashboard = () => {
     }
   };
 
-  const toggleNewChatModal = () => {
-    setOpenNewChat((prev) => !prev);
-  };
-
-  const handleLogout = () => {
+  const handleLogout = React.useCallback(() => {
     localStorage.clear();
     router.push("/login");
-  };
+  }, [router]);
+
+  const toggleNewChatModal = React.useCallback(() => {
+    setOpenNewChat((prev) => !prev);
+  }, []);
+
+  const userDetailMemo = React.useMemo(() => userDetail, [userDetail]);
 
   const defaultLayout = [150, 300];
 
@@ -50,36 +54,53 @@ const Dashboard = () => {
       <div className="flex grow-0 shrink-0 basis-auto items-center justify-between p-3 border-b border-gray-500">
         <div className="relative">
           {userDetail.avatar && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarImage src={userDetail.avatar} alt="Image" />
-                    <AvatarFallback>OM</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium leading-none">{userDetail.name}</p>
-                    <p className="text-sm text-muted-foreground">{userDetail.email}</p>
-                  </div>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center space-x-4">
+              <Avatar>
+                <AvatarImage src={userDetail.avatar} alt="Image" />
+                <AvatarFallback>OM</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium leading-none">{userDetailMemo.name}</p>
+                <p className="text-sm text-muted-foreground">{userDetailMemo.email}</p>
+              </div>
+            </div>
           )}
         </div>
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={toggleNewChatModal}>
-                <Plus className="h-4 w-4" />
-                <span className="sr-only">New message</span>
+        <div className="flex items-center space-x-4">
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={toggleNewChatModal}>
+                  <Plus className="h-4 w-4" />
+                  <span className="sr-only">New message</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={10}>New message</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline" className="sm:hidden ml-auto rounded-full">
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Chat List</span>
               </Button>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={10}>New message</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0">
+              <ChatList userDetail={userDetailMemo} openNewChat={openNewChat} selectedChat={selectedChat} setSelectedChatValue={setSelectedChat} />
+            </SheetContent>
+          </Sheet>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="outline" className="ml-auto rounded-full" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  <span className="sr-only">Logout</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={10}>Logout</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {openNewChat && <NewChat open={openNewChat} closeChatModal={toggleNewChatModal} />}
@@ -89,19 +110,28 @@ const Dashboard = () => {
         onLayout={(sizes: number[]) => {
           document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(sizes)}`;
         }}
-        className="h-full items-stretch"
+        className="h-full w-full items-stretch"
       >
-        <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
-          <ChatList userDetail={userDetail} openNewChat={openNewChat} selectedChat={selectedChat} setSelectedChatValue={setSelectedChat} />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={40}>
+        <div className="hidden w-full sm:flex h-full">
+          <ResizablePanel defaultSize={defaultLayout[0]} minSize={30}>
+            <ChatList userDetail={userDetailMemo} openNewChat={openNewChat} selectedChat={selectedChat} setSelectedChatValue={setSelectedChat} />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={defaultLayout[1]} minSize={40}>
+            {selectedChat ? (
+              <ChatDetails selectedChat={selectedChat} userDetail={userDetailMemo} />
+            ) : (
+              <div className="flex items-center justify-center h-full">Select chat</div>
+            )}
+          </ResizablePanel>
+        </div>
+        <div className="block w-full sm:hidden">
           {selectedChat ? (
-            <ChatDetails selectedChat={selectedChat} userDetail={userDetail} />
+            <ChatDetails selectedChat={selectedChat} userDetail={userDetailMemo} />
           ) : (
-            <div className="flex items-center justify-center h-full">Select chat</div>
+            <div className="flex items-center justify-center h-full p-4">Select chat</div>
           )}
-        </ResizablePanel>
+        </div>
       </ResizablePanelGroup>
     </div>
   );

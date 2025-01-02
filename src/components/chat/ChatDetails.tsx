@@ -49,6 +49,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
   React.useEffect(() => {
     const handleNewMessage = (data: { data: IMessage }) => {
       setMessages((prevMessages) => [...prevMessages, data.data]);
+      data.data.sender._id != userDetail._id && toast.success("New message received.");
     };
     socket?.on("receiveNewMessage", handleNewMessage);
 
@@ -57,7 +58,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     };
   }, [socket]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = React.useCallback(async () => {
     try {
       const { status, data } = await apiService.get(`/message/${selectedChat}`);
       if (status === 200) {
@@ -66,7 +67,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to fetch messages.");
     }
-  };
+  }, [selectedChat]);
 
   const fetchChatDetails = async () => {
     try {
@@ -79,7 +80,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = React.useCallback(async () => {
     if (!message.trim()) {
       return toast.error("Please write a message.");
     }
@@ -94,18 +95,18 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to send message.");
     }
-  };
+  }, [message, selectedChat]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = React.useCallback(() => {
     scrollContainerRef.current?.scrollTo({
       top: scrollContainerRef.current.scrollHeight,
       behavior: "smooth",
     });
-  };
+  }, []);
 
   React.useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   return (
     <>

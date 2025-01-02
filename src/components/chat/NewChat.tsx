@@ -23,14 +23,14 @@ const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
     getUsers();
   }, []);
 
-  const getUsers = async () => {
+  const getUsers = React.useCallback(async () => {
     try {
       const apiResponse = await apiService.get(`/chat/users`);
       setUsers(apiResponse.data.data);
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
-  };
+  }, []);
 
   const createChat = async (values: { users: string }) => {
     try {
@@ -101,7 +101,7 @@ const NewChat: React.FC<INewChat> = ({ open, closeChatModal }) => {
               </CommandGroup>
             </CommandList>
           </Command>
-          <DialogFooter className="flex items-center border-t p-4 sm:justify-between">
+          <DialogFooter className="flex items-center border-t p-4 flex-row justify-between"> 
             {formik.values.users ? (
               <div className="flex -space-x-2 overflow-hidden">
                 {/* {formik.values.users.map((user) => ( */}

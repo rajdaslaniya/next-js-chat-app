@@ -21,32 +21,29 @@ const ChatList: React.FC<IChatList> = ({ userDetail, setSelectedChatValue, openN
 
   const [searchText, setSearchText] = React.useState("");
   const [chatList, setChatList] = React.useState<Chat[]>([]);
-  const [filteredChatList, setFilteredChatList] = React.useState<Chat[]>([]);
 
   React.useEffect(() => {
     fetchChatList();
   }, [openNewChat]);
 
-  const fetchChatList = async () => {
+  const fetchChatList = React.useCallback(async () => {
     try {
       const apiResponse = await apiService.get("/chat/chats");
       if (apiResponse.status === 200) {
         const chats = apiResponse.data.data;
         setChatList(chats);
-        setFilteredChatList(chats);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to fetch chat list.");
     }
-  };
+  }, []);
 
-  React.useEffect(() => {
-    const filtered = chatList.filter((chat) => {
+  const filteredChatList = React.useMemo(() => {
+    return chatList.filter((chat) => {
       const chatName = chat.is_group ? chat.chat_name : chat.users[0]?.name;
       const latestMessage = chat.latest_message?.message || "";
       return chatName.toLowerCase().includes(searchText.toLowerCase()) || latestMessage.toLowerCase().includes(searchText.toLowerCase());
     });
-    setFilteredChatList(filtered);
   }, [searchText, chatList]);
 
   React.useEffect(() => {
@@ -68,9 +65,15 @@ const ChatList: React.FC<IChatList> = ({ userDetail, setSelectedChatValue, openN
           return updatedChatList;
         });
       });
-      return () => {
-        socket?.off("userOnline");
+
+      const handleTabClose = () => {
         socket?.emit("userOffline", userDetail._id);
+      };
+      window.addEventListener("beforeunload", handleTabClose);
+
+      return () => {
+        socket?.emit("userOffline", userDetail._id);
+        window.removeEventListener("beforeunload", handleTabClose);
       };
     }
   }, [userDetail, socket]);
