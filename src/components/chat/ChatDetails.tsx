@@ -26,6 +26,7 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
 
   const socket = useSocket();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [lastHeight, setLastHeight] = useState(null);
 
   useEffect(() => {
     if (selectedChat) {
@@ -98,10 +99,26 @@ const ChatDetails: React.FC<IChatDetails> = ({ selectedChat, userDetail }) => {
   }, [message, selectedChat]);
 
   const scrollToBottom = useCallback(() => {
-    scrollContainerRef.current?.scrollTo({
-      top: scrollContainerRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } =
+        scrollContainerRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 100) {
+        scrollContainerRef.current.scrollTop = scrollHeight;
+        return;
+      }
+
+      if (!lastHeight) {
+        scrollContainerRef.current.scrollTop = scrollHeight;
+      } else {
+        if (scrollTop === 0) {
+          const diff = scrollHeight - lastHeight;
+          scrollContainerRef.current?.scrollTo({
+            top: diff,
+            behavior: "smooth",
+          });
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {

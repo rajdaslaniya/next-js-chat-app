@@ -3,7 +3,7 @@ import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
-import LoginSignUpLayout from "@/components/Layout/LoginSignUpLayout";
+import LoginSignUpLayout from "@/components/layout/LoginSignUpLayout";
 import InputField from "@/components/common/InputField";
 import apiService from "@/utils/base-services";
 import { toast } from "react-toastify";
